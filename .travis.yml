@@ -6,7 +6,7 @@ before_install:
   - docker build -t andre1050/react-test -f ./client/Dockerfile.dev ./client # Build context is the client directory
 
 script:
-  - docker run andre1050/react-test npm test -- --coverage # Add the --coverage flag otherwise the script runs in watch mode and never exits
+  - docker run -e CI=true andre1050/react-test # Add the CI=true variable to ensure the scripts exits (otherwise it's watch mode)
 
 # Build a Docker image for each of the project folders.
 # No need to specify Dockerfile name as we're using the default for each directory (not the Dockerfile.dev one)
