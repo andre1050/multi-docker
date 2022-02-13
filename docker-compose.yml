@@ -1,0 +1,51 @@
+version: "3"
+services:
+  postgres:
+    image: "postgres:latest" # Starts Postgres as a service
+    environment:
+      - POSTGRES_PASSWORD=postgres_password
+  redis:
+    image: "redis:latest" # Starts Redis as a service
+  nginx:
+    depends_on: # Reference to upstream services
+      - api
+      - client
+    restart: always
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./nginx
+    ports:
+      - "3000:80" # Map port 3000 on the browser to port 80 inside container
+  api:
+    build:
+      dockerfile: Dockerfile.dev # The file path is relative to the context
+      context: ./server
+    volumes:
+      - /app/node_modules # Leave the node_modules alone (don't copy or overwrite anything)
+      - ./server:/app # Copy the local server folder into the container app folder
+    environment:
+      - REDIS_HOST=redis # Points to the redis service above
+      - REDIS_PORT=6379 # Default port for Redis
+      - PGUSER=postgres # Default values from the image page in Docker Hub
+      - PGHOST=postgres # Points to the postgres service above
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres_password
+      - PGPORT=5432 # Default port for Postgres
+  client:
+    stdin_open: true
+    build:
+      dockerfile: Dockerfile.dev # The file path is relative to the context
+      context: ./client
+    volumes:
+      - /app/node_modules # Leave the node_modules alone (don't copy or overwrite anything)
+      - ./client:/app # Copy the local client folder into the container app folder
+  worker:
+    build:
+      dockerfile: Dockerfile.dev # The file path is relative to the context
+      context: ./worker
+    volumes:
+      - /app/node_modules # Leave the node_modules alone (don't copy or overwrite anything)
+      - ./worker:/app # Copy the local client folder into the container app folder
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
