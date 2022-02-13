@@ -1,0 +1,27 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t andre1050/react-test -f ./client/Dockerfile.dev ./client # Build context is the client directory
+
+script:
+  - docker run andre1050/react-test npm test -- --coverage # Add the --coverage flag otherwise the script runs in watch mode and never exits
+
+# Build a Docker image for each of the project folders.
+# No need to specify Dockerfile name as we're using the default for each directory (not the Dockerfile.dev one)
+after_success:
+  - docker build -t andre1050/multi-client ./client
+  - docker build -t andre1050/multi-nginx ./nginx
+  - docker build -t andre1050/multi-server ./server
+  - docker build -t andre1050/multi-worker ./worker
+
+  # Login to Docker CLI
+  # Print the DOCKER_PASSWORD env variable and emit that to the next command as named variable password-stdin
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Publish these images to DockerHub
+  - docker push andre1050/multi-client
+  - docker push andre1050/multi-nginx
+  - docker push andre1050/multi-server
+  - docker push andre1050/multi-worker
